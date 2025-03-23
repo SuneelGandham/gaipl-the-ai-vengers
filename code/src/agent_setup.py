@@ -8,6 +8,15 @@ from langchain_core.runnables import RunnableLambda
 from langchain_core.messages import BaseMessage
 from mock_actions import mock_restart_server, mock_get_server_status
 
+
+# Mock action suggestions (can be expanded dynamically)
+actions = [
+    {"name": "Restart Service"},
+    {"name": "Generate Incident Report"},
+    {"name": "Check System Logs"},
+    {"name": "Send Email"}
+]
+
 # ✅ Define State Schema
 class AgentState(BaseModel):
     messages: List[BaseMessage]
@@ -44,15 +53,18 @@ system_prompt = ChatPromptTemplate.from_messages([
 # ✅ Function to determine next action
 def decide_action(state: AgentState) -> AgentState:
     latest_message = state.messages[-1].content.lower()
-
-    if "restart" in latest_message and "server" in latest_message:
-        return AgentState(messages=state.messages, next="restart_server")
-    
-    elif "status" in latest_message and "server" in latest_message:
-        return AgentState(messages=state.messages, next="get_server_status")
-
-    else:
-        return AgentState(messages=state.messages, next="respond")  # ✅ Default behavior when no task is found
+    for action in actions:
+        if action["name"] == "Restart Service":
+            return AgentState(messages=state.messages, next="restart_server")
+        
+        elif action["name"] == "Generate Incident Report":
+            return AgentState(messages=state.messages, next="get_server_status")
+        elif action["name"] == "Check System Logs":
+            return AgentState(messages=state.messages, next="get_server_status")#TODO -
+        elif action["name"] == "Send Email":
+            return AgentState(messages=state.messages, next="get_server_status")#TODO -
+        else:
+            return AgentState(messages=state.messages, next="respond")  # ✅ Default behavior when no task is found
 
 # ✅ Function to handle normal responses
 def respond(state: AgentState):
